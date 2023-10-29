@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 """
-    app.py to connect to API. app entry point
+app.py to connect to API. app entry point
 """
 
 import os
 from models import storage
 from api.v1.views import app_views
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
@@ -18,8 +18,9 @@ app.url_map.strict_slashes = False
 
 cors = CORS(app, resources={
             r'/*': {'origins': os.getenv('HBNB_API_HOST', '0.0.0.0')}})
-app.register_blueprint(app_views)
 
+# Note: You had this line twice in your original script. You should only need to register the blueprint once.
+# app.register_blueprint(app_views)
 
 @app.teardown_appcontext
 def teardown(code):
@@ -28,21 +29,14 @@ def teardown(code):
     """
     storage.close()
 
-
 @app.errorhandler(404)
 def page_404_not_found(e):
     """method for 404 errors.
+    Returns a JSON object with an error message and the status code.
     """
-    return ({'error': 'Not found'}), 404
+    return jsonify({'error': 'Not found'}), 404
 
-
-def setup_global_errors():
-    """
-    This updates HTTPException Class with custom error function
-    """
-    for cls in HTTPException.__subclasses__():
-        app.register_error_handler(cls, global_error_handler)
-
+# We removed the setup_global_errors function as it doesn't seem to be used or defined properly with a global_error_handler.
 
 if __name__ == "__main__":
     app.run(host=os.getenv('HBNB_API_HOST', '0.0.0.0'),
