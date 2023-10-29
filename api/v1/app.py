@@ -19,15 +19,14 @@ app.url_map.strict_slashes = False
 cors = CORS(app, resources={
             r'/*': {'origins': os.getenv('HBNB_API_HOST', '0.0.0.0')}})
 
-# Note: You had this line twice in your original script. You should only need to register the blueprint once.
 # app.register_blueprint(app_views)
-
 @app.teardown_appcontext
 def teardown(code):
     """
     teardown_appcontext method that closes the storage
     """
     storage.close()
+
 
 @app.errorhandler(404)
 def page_404_not_found(e):
@@ -36,7 +35,6 @@ def page_404_not_found(e):
     """
     return jsonify({'error': 'Not found'}), 404
 
-# We removed the setup_global_errors function as it doesn't seem to be used or defined properly with a global_error_handler.
 
 if __name__ == "__main__":
     app.run(host=os.getenv('HBNB_API_HOST', '0.0.0.0'),
