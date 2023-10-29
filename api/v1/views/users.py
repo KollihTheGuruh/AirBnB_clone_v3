@@ -2,6 +2,7 @@
 """
 This is module users
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, User, storage)
 from flask import (abort, jsonify, make_response, request)
 
@@ -149,7 +150,7 @@ def create_user():
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -219,7 +220,7 @@ def update_user(user_id=None):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400

@@ -2,6 +2,7 @@
 """
 This is module states
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, State, storage)
 from flask import (abort, jsonify, make_response, request)
 
@@ -176,7 +177,7 @@ def create_state():
     r = None
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -234,7 +235,7 @@ def update_state(state_id=None):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400

@@ -2,8 +2,9 @@
 """
 This is module cities
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, City, storage)
-from flask import (abort, jsonify, request)
+from flask import (abort, jsonify, make_response, request)
 
 
 @app_views.route("/states/<state_id>/cities", methods=["GET"],
@@ -207,7 +208,8 @@ def create_one_city(state_id):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
+        return make_response(jsonify({'error': 'Not a JSON'}), 400)
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -278,7 +280,7 @@ def update_one_city(city_id):
         abort(404)
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400

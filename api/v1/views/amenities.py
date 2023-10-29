@@ -2,6 +2,7 @@
 """
 This is module amenities
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, Amenity, storage)
 from flask import (abort, jsonify, make_response, request)
 
@@ -145,7 +146,7 @@ def create_amenity():
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -203,7 +204,7 @@ def update_amenity(amenity_id=None):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400

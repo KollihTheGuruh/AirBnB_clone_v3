@@ -2,8 +2,9 @@
 """
 Review model hold the endpoint (route) and their respective view functions
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, Review, storage)
-from flask import (abort, jsonify, request)
+from flask import (abort, has_request_context, jsonify, request)
 
 
 @app_views.route("/places/<place_id>/reviews", methods=["GET"],
@@ -218,7 +219,7 @@ def create_review(place_id):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -299,7 +300,7 @@ def update_review(review_id):
         abort(404)
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400

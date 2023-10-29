@@ -2,8 +2,9 @@
 """
 This is module places
 """
+from http.client import BAD_REQUEST
 from api.v1.views import (app_views, Place, storage)
-from flask import (abort, jsonify, make_response, request)
+from flask import (abort, has_request_context, jsonify, make_response, request)
 import os
 
 
@@ -286,7 +287,7 @@ def create_place(city_id):
         abort(404)
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -382,7 +383,7 @@ def update_place(place_id=None):
     """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -476,7 +477,7 @@ def list_places():
      """
     try:
         r = request.get_json()
-    except:
+    except BAD_REQUEST:
         r = None
     if r is None:
         return "Not a JSON", 400
@@ -510,8 +511,6 @@ def list_places():
                             flag = False
                             break
                     if flag:
-                                # using amenities make it instance attribute,
-                                # not just class check out to_json
                         all_places.append(e)
         else:
             all_places = all_places2
