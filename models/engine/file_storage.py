@@ -1,140 +1,100 @@
 #!/usr/bin/python3
-"""
-module file_storage
-
-"""
-from datetime import datetime
+'''
+    Define class FileStorage
+'''
 import json
-from models.amenity import Amenity
-from models.base_model import BaseModel
-from models.city import City
-from models.place import Place
-from models.review import Review
-from models.state import State
-from models.user import User
-# from models import storage
-import os
+import models
 
 
 class FileStorage:
-    """
-    Stores objects in a file in a json format
-
-    **Class Attributes**
-        __file_path: private, the path/to/file
-        __objects: private, a dictionary of all the objects
-
-    **Instance Attributes**
-        __models_available: private, classes currently handled
-    """
+    '''
+        Serializes instances to JSON file and deserializes to JSON file.
+    '''
     __file_path = "file.json"
-    if os.getenv("FS_TEST", "no") == "yes":
-        __file_path = "test_file.json"
     __objects = {}
 
-    def __init__(self):
-        """Instantiate the class"""
-        self.__models_available = {"User": User, "BaseModel": BaseModel,
-                                   "Amenity": Amenity, "City": City,
-                                   "Place": Place, "Review": Review,
-                                   "State": State}
-        self.reload()
-
     def all(self, cls=None):
-        """
-        Returns the required objects
-
-        **Arguments**
-            cls: not required, a valid Class Name
-        """
+        '''
+            Return the dictionary
+        '''
+        new_dict = {}
         if cls is None:
-            return FileStorage.__objects
+            return self.__objects
+
+        if cls is not None:
+            for k, v in self.__objects.items():
+                if cls == k.split(".")[0]:
+                    new_dict[k] = v
+            return new_dict
         else:
-            result = {}
-            for k, v in FileStorage.__objects.items():
-                if v.__class__.__name__ == cls:
-                    result[k] = v
-            return result
+            return self.__objects
+
+    def get(self, cls, id):
+        '''
+            Retrieves one object if exists
+        '''
+        cls_dict = self.all(cls)
+        for k, v in cls_dict.items():
+            obj = cls + '.' + id
+            if k == obj:
+                return(v)
+        return(None)
+
+    def count(self, cls=None):
+        '''
+           counts the num of objects in particular cls
+        '''
+        count = 0
+        cls_dict = self.all(cls)
+        count = len(cls_dict)
+        return(count)
 
     def new(self, obj):
-        """
-        Adds a new object to __objects
-
-        **Arguments**
-            obj: an object
-        """
-        if obj is not None:
-            FileStorage.__objects[obj.id] = obj
+        '''
+            Set in __objects the obj with key <obj class name>.id
+            Aguments:
+                obj : An instance object.
+        '''
+        key = str(obj.__class__.__name__) + "." + str(obj.id)
+        value_dict = obj
+        FileStorage.__objects[key] = value_dict
 
     def save(self):
-        """puts all the object to file after serializing them"""
-        store = {}
-        for k in FileStorage.__objects.keys():
-            store[k] = FileStorage.__objects[k].to_json(True)
-        with open(FileStorage.__file_path, mode="w+", encoding="utf-8") as fd:
-            fd.write(json.dumps(store))
+        '''
+            Serializes __objects attribute to JSON file.
+        '''
+        objects_dict = {}
+        for key, val in FileStorage.__objects.items():
+            objects_dict[key] = val.to_dict()
+
+        with open(FileStorage.__file_path, mode='w', encoding="UTF8") as fd:
+            json.dump(objects_dict, fd)
 
     def reload(self):
-        """
-        Restart from what is saved on file
-        All errors will be silently skipped
-        """
-        FileStorage.__objects = {}
+        '''
+            Deserializes the JSON file to __objects.
+        '''
         try:
-            with open(FileStorage.__file_path,
-                      mode="r+", encoding="utf-8") as fd:
-                temp = json.load(fd)
-        except Exception as e:
-            return
-        for k in temp.keys():
-            cls = temp[k].pop("__class__", None)
-            if cls not in self.__models_available.keys():
-                continue
-            # call a good init function
-            FileStorage.__objects[k] = self.__models_available[cls](**temp[k])
+            with open(FileStorage.__file_path, encoding="UTF8") as fd:
+                FileStorage.__objects = json.load(fd)
+            for key, val in FileStorage.__objects.items():
+                class_name = val["__class__"]
+                class_name = models.classes[class_name]
+                FileStorage.__objects[key] = class_name(**val)
+        except FileNotFoundError:
+            pass
 
     def delete(self, obj=None):
-        """Remove an object from the dictionary"""
-        if obj:
-            FileStorage.__objects.pop(obj.id, None)
+        '''
+        Deletes an obj
+        '''
+        if obj is not None:
+            key = str(obj.__class__.__name__) + "." + str(obj.id)
+            FileStorage.__objects.pop(key, None)
             self.save()
 
     def close(self):
-        """Close a session"""
+        '''
+        Deserialize JSON file to objects
+        '''
         self.reload()
-
-    def get(self, cls, id_):
-        """
-        Retrieve one object
-
-        Arguments:
-            cls: string representing a class name
-            id_: string representing the object id
-
-        Return:
-           object of cls and id passed in argument
-        """
-        if (cls not in self.__models_available.keys()) or (id_ is None):
-            return None
-        all_objs = self.all(cls)
-        for k in all_objs.keys():
-            if k == id_:
-                return all_objs[k]
-        return None
-
-    def count(self, cls=None):
-        """
-        Number of objects in a certain class
-
-        Arguments:
-            cls: String representing a class name (default None)
-
-        Return:
-            number of objects in that class or in total.
-            -1 if the class is not valid
-        """
-        if cls is None:
-            return len(self.__objects)
-        if cls in self.__models_available:
-            return len(self.all(cls))
-        return -1
