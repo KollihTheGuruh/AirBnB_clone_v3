@@ -1,219 +1,75 @@
 #!/usr/bin/python3
-"""
-This is module amenities
-"""
-from http.client import BAD_REQUEST
-from api.v1.views import (app_views, Amenity, storage)
-from flask import (abort, jsonify, make_response, request)
+"""creates a new view for State Objects"""
+from os import name
+from api.v1.views import app_views
+from flask import jsonify, request, abort
+from models.amenity import Amenity
+from models import storage
+import json
 
 
 @app_views.route('/amenities', methods=['GET'], strict_slashes=False)
+def get_amen():
+    """gets all state objects"""
+    all_objects = storage.all(Amenity)
+    single_object = []
+    for all_objects in all_objects.values():
+        single_object.append(all_objects.to_dict())
+    return jsonify(single_object)
+
+
 @app_views.route('/amenities/<amenity_id>', methods=['GET'],
                  strict_slashes=False)
-def view_amenity(amenity_id=None):
-    """Example endpoint returning a list of all amenities or of one specified
-    Retrieves a list of all amenties or of one specified by amenity_id
-    ---
-    parameters:
-      - name: amenity_id
-        in: path
-        type: string
-        enum: ["all", cf701d1a-3c19-4bac-bd99-15321f1140f2", None]
-        required: true
-        default: None
+def get_amen_id(amenity_id):
+    """gets the state object using his id"""
+    all_objects = storage.all(Amenity)
+    new_dict = {}
+    for key, value in all_objects.items():
+        if amenity_id == value.id:
+            new_dict = value.to_dict()
+            return jsonify(new_dict)
+    abort(404)
 
-    definitions:
 
-      Amenity:
-        type: object
-        properties:
-          __class__:
-            type: string
-            description: The string of class object
-          created_at:
-            type: string
-            description: The date the object created
-          email:
-            type: string
-          first_name:
-            type: string
-          last_name:
-            type: string
-          id:
-            type: string
-            description: the id of the user
-          updated_at:
-            type: string
-            description: The date the object was updated
-            items:
-              $ref: '#/definitions/Color'
-      Color:
-        type: string
-    responses:
-      200:
-        description: A list of dicts or dict, each dict is an amenity
-        schema:
-          $ref: '#/definitions/Amenity'
-        examples:
-            [{"__class__": "Amenity",
-              "created_at": "2017-03-25T02:17:06",
-              "id": "cf701d1a-3c19-4bac-bd99-15321f1140f2",
-              "name": "Dog(s)",
-              "updated_at": "2017-03-25T02:17:06"}]
-    """
-    if amenity_id is None:
-        all_amenities = [state.to_json() for state
-                         in storage.all("Amenity").values()]
-        return jsonify(all_amenities)
-    s = storage.get("Amenity", amenity_id)
-    if s is None:
+@app_views.route('/amenities/<amenity_id>',
+                 methods=['DELETE'], strict_slashes=False)
+def delete_amen(amenity_id=None):
+    """Deletes"""
+    obj = storage.get(Amenity, amenity_id)
+    if obj is None:
         abort(404)
-    return jsonify(s.to_json())
-
-
-@app_views.route('/amenities/<amenity_id>', methods=['DELETE'],
-                 strict_slashes=False)
-def delete_amenity(amenity_id=None):
-    """Example endpoint deleting one amenity
-    Deletes a review based on the amenity_id
-    ---
-    definitions:
-      Amenity:
-        type: object
-      Color:
-        type: string
-      items:
-        $ref: '#/definitions/Color'
-
-    responses:
-      200:
-        description: An empty dictionary
-        schema:
-          $ref: '#/definitions/City'
-        examples:
-            {}
-    """
-    amenity = storage.get("Amenity", amenity_id)
-    if amenity is None:
-        abort(404)
-    storage.delete(amenity)
+    storage.delete(obj)
+    storage.save()
     return jsonify({}), 200
 
 
 @app_views.route('/amenities', methods=['POST'], strict_slashes=False)
-def create_amenity():
-    """Example endpoint Creates an amenity
-    Creates an amenity based on amenity_id with the JSON body
-    ---
-    definitions:
-
-      Amenity:
-        type: object
-        properties:
-          __class__:
-            type: string
-            description: The string of class object
-          created_at:
-            type: string
-            description: The date the object created
-          email:
-            type: string
-          first_name:
-            type: string
-          last_name:
-            type: string
-          id:
-            type: string
-            description: the id of the user
-          updated_at:
-            type: string
-            description: The date the object was updated
-            items:
-              $ref: '#/definitions/Color'
-      Color:
-        type: string
-    responses:
-      201:
-        description: A list of dicts or dict, each dict is an amenity
-        schema:
-          $ref: '#/definitions/Amenity'
-        examples:
-            [{"__class__": "Amenity",
-              "created_at": "2017-03-25T02:17:06",
-              "id": "cf701d1a-3c19-4bac-bd99-15321f1140f2",
-              "name": "Dog(s)",
-              "updated_at": "2017-03-25T02:17:06"}]
-    """
-    try:
-        r = request.get_json()
-    except BAD_REQUEST:
-        r = None
-    if r is None:
-        return "Not a JSON", 400
-    if 'name' not in r.keys():
-        return "Missing name", 400
-    s = Amenity(**r)
-    s.save()
-    return jsonify(s.to_json()), 201
+def post_amen():
+    """Creates"""
+    res = request.get_json()
+    if not res:
+        abort(400, {"Not a JSON"})
+    if 'name' not in res:
+        abort(400, {"Missing name"})
+    obj = Amenity(name=res['name'])
+    storage.new(obj)
+    storage.save()
+    return jsonify(obj.to_dict()), 201
 
 
-@app_views.route('/amenities/<amenity_id>', methods=['PUT'],
-                 strict_slashes=False)
-def update_amenity(amenity_id=None):
-    """Example endpoint updates an amenity
-    Updates an amenity based on amenity_id with the JSON body
-    ---
-    definitions:
-
-      Amenity:
-        type: object
-        properties:
-          __class__:
-            type: string
-            description: The string of class object
-          created_at:
-            type: string
-            description: The date the object created
-          email:
-            type: string
-          first_name:
-            type: string
-          last_name:
-            type: string
-          id:
-            type: string
-            description: the id of the user
-          updated_at:
-            type: string
-            description: The date the object was updated
-            items:
-              $ref: '#/definitions/Color'
-      Color:
-        type: string
-    responses:
-      200:
-        description: A list of a dict, the dict is an amenity
-        schema:
-          $ref: '#/definitions/Amenity'
-        examples:
-            [{"__class__": "Amenity",
-              "created_at": "2017-03-25T02:17:06",
-              "id": "cf701d1a-3c19-4bac-bd99-15321f1140f2",
-              "name": "Dog(s)",
-              "updated_at": "2017-03-25T02:17:06"}]
-    """
-    try:
-        r = request.get_json()
-    except BAD_REQUEST:
-        r = None
-    if r is None:
-        return "Not a JSON", 400
-    a = storage.get("Amenity", amenity_id)
-    if a is None:
+@app_views.route('/amenities/<amenity_id>',
+                 methods=['PUT'], strict_slashes=False)
+def put_amen(amenity_id=None):
+    """PUT"""
+    res = request.get_json()
+    if not res:
+        abort(400, {"Not a JSON"})
+    obj = storage.get(Amenity, amenity_id)
+    if obj is None:
         abort(404)
-    for k in ("id", "created_at", "updated_at"):
-        r.pop(k, None)
-    for k, v in r.items():
-        setattr(a, k, v)
-    a.save()
-    return jsonify(a.to_json()), 200
+    i_key = ["id", "created_at", "updated_at"]
+    for key, value in res.items():
+        if key not in i_key:
+            setattr(obj, key, value)
+    storage.save()
+    return jsonify(obj.to_dict()), 200
