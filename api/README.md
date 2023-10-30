@@ -40,6 +40,7 @@ The first line of all your files should be exactly #!/usr/bin/python3
 A README.md file, at the root of the folder of the project, is mandatory
 Your code should use the PEP 8 style (version 1.7)
 All your files must be executable
+
 The length of your files will be tested using wc
 All your modules should have documentation (python3 -c 'print(__import__("my_module").__doc__)')
 All your classes should have documentation (python3 -c 'print(__import__("my_module").MyClass.__doc__)')
@@ -55,6 +56,7 @@ All your test files should be inside a folder tests
 You have to use the unittest module
 All your test files should be python files (extension: .py)
 All your test files and folders should start by test_
+
 Your file organization in the tests folder should be the same as your project: ex: for models/base_model.py, unit tests must be in: tests/test_models/test_base_model.py
 All your tests should be executed by using this command: python3 -m unittest discover tests
 You can also test file by file by using this command: python3 -m unittest tests/test_models/test_base_model.py
